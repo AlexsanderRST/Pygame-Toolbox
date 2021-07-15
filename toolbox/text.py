@@ -17,7 +17,8 @@ class SelectionText(pygame.sprite.Sprite):
                  text='This is a Selection Text',
                  font_name='', font_size=32, font_color=Color('white'),
                  bg_color=Color('black'),
-                 outline_color=Color('white'),
+                 outline=3, outline_color=Color('white'),
+                 hoverline=3, hoverline_color=Color('yellow'),
                  padx=10, pady=10,
                  on_click=lambda: None):
         super().__init__()
@@ -37,12 +38,20 @@ class SelectionText(pygame.sprite.Sprite):
         self.w = text.get_width() + 2 * self.padx
         self.h = text.get_height() + 2 * self.pady
         self.bg_color = bg_color
-        self.outline_color = outline_color
+        self.outline_width = 3
+        self.outline_color = self.bg_color
+        self.hoverline_width = hoverline
+        self.hoverline_color = hoverline_color
         self.on_click = on_click
 
         # image and rect
         self.image = pygame.Surface((self.w, self.h))
         self.rect = self.image.get_rect()
+
+        # outline setup
+        if outline:
+            self.outline_width = outline
+            self.outline_color = outline_color
 
     def update(self):
         self.image = pygame.Surface((self.w, self.h))
@@ -50,7 +59,9 @@ class SelectionText(pygame.sprite.Sprite):
         self.image.blit(self.font.render(self.text, True, self.font_color),
                         (self.padx, self.pady))
         if self.hovered():
-            pygame.draw.rect(self.image, self.outline_color, (0, 0, self.w, self.h), 3)
+            pygame.draw.rect(self.image, self.hoverline_color, (0, 0, self.w, self.h), self.hoverline_width)
+        else:
+            pygame.draw.rect(self.image, self.outline_color, (0, 0, self.w, self.h), self.outline_width)
 
     def hovered(self):
         if self.rect.collidepoint(pygame.mouse.get_pos()):
@@ -62,9 +73,11 @@ class AnimatedText(pygame.sprite.Sprite):
     def __init__(self,
                  text="I'm an Animated Text!",
                  font_name='', font_size=32, font_color=Color('white'),
-                 bg_color=Color('#6E7EC0'),
+                 bg_color=Color('black'),
                  padx=10, pady=10,
-                 vel=1
+                 vel=1,
+                 outline=0, outline_color=Color('white'),
+                 on_end=lambda: None,
                  ):
         super().__init__()
 
@@ -81,6 +94,9 @@ class AnimatedText(pygame.sprite.Sprite):
         self.vel = vel
         self.bg_color = bg_color
         self.font_color = font_color
+        self.outline_width = 1
+        self.outline_color = bg_color
+        self.on_end = on_end
 
         # get text size
         text = self.font.render(''.join(self.text), True, Color('black'))
@@ -89,11 +105,22 @@ class AnimatedText(pygame.sprite.Sprite):
         self.image = pygame.Surface((text.get_width() + 2 * self.padx, text.get_height() + 2 * self.pady))
         self.rect = self.image.get_rect()
 
+        # outline setup
+        if outline:
+            self.outline_width = outline
+            self.outline_color = outline_color
+
     def update(self):
         self.image.fill(self.bg_color)
         if self.frame <= len(self.text) * self.vel:
             text = self.font.render(''.join(self.text[:self.frame//self.vel]), True, self.font_color, self.bg_color)
             self.frame += 1
         else:
+            self.end()
             text = self.font.render(''.join(self.text), True, self.font_color, self.bg_color)
         self.image.blit(text, (self.padx, self.pady))
+        pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.image.get_size()], self.outline_width)
+
+    def end(self):
+        self.on_end()
+        self.on_end = lambda: None
