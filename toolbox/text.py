@@ -24,15 +24,18 @@ class SelectionText(pygame.sprite.Sprite):
 
         # font'n'text
         try:
-            font = pygame.font.Font(f'{fonts_dir}{font_name}.ttf', font_size)
+            self.font = pygame.font.Font(f'{fonts_dir}{font_name}.ttf', font_size)
         except FileNotFoundError:
-            font = pygame.font.Font(None, font_size)
-        self.text = font.render(text, True, font_color)
+            self.font = pygame.font.Font(None, font_size)
+        self.font_size = font_size
+        self.font_color = font_color
 
         # properties
+        self.text = text
         self.padx, self.pady = padx, pady
-        self.w = self.text.get_width() + 2 * self.padx
-        self.h = self.text.get_height() + 2 * self.pady
+        text = self.font.render(self.text, True, self.font_color)
+        self.w = text.get_width() + 2 * self.padx
+        self.h = text.get_height() + 2 * self.pady
         self.bg_color = bg_color
         self.outline_color = outline_color
         self.on_click = on_click
@@ -44,7 +47,8 @@ class SelectionText(pygame.sprite.Sprite):
     def update(self):
         self.image = pygame.Surface((self.w, self.h))
         self.image.fill(self.bg_color)
-        self.image.blit(self.text, (self.padx, self.pady))
+        self.image.blit(self.font.render(self.text, True, self.font_color),
+                        (self.padx, self.pady))
         if self.hovered():
             pygame.draw.rect(self.image, self.outline_color, (0, 0, self.w, self.h), 3)
 
