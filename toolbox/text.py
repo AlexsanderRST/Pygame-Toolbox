@@ -69,7 +69,7 @@ class SelectionText(pygame.sprite.Sprite):
         return False
 
 
-class AnimatedText(pygame.sprite.Sprite):
+class TypingText(pygame.sprite.Sprite):
     def __init__(self,
                  text="I'm an Animated Text!",
                  font_name='', font_size=32, font_color=Color('white'),
@@ -77,6 +77,7 @@ class AnimatedText(pygame.sprite.Sprite):
                  padx=10, pady=10,
                  vel=1,
                  outline=0, outline_color=Color('white'),
+                 start_at_init=True, finish_at_init=False,
                  on_end=lambda: None,
                  ):
         super().__init__()
@@ -91,6 +92,7 @@ class AnimatedText(pygame.sprite.Sprite):
         self.text = list(text)
         self.padx, self.pady = padx, pady
         self.frame = 0
+        self.frame_counter = 0
         self.vel = vel
         self.bg_color = bg_color
         self.font_color = font_color
@@ -110,16 +112,28 @@ class AnimatedText(pygame.sprite.Sprite):
             self.outline_width = outline
             self.outline_color = outline_color
 
+        # initial state managment
+        if start_at_init:
+            self.start()
+        elif finish_at_init:
+            self.finish()
+
     def update(self):
         self.image.fill(self.bg_color)
-        if self.frame <= len(self.text) * self.vel:
+        if self.frame < len(self.text) * self.vel:
             text = self.font.render(''.join(self.text[:self.frame//self.vel]), True, self.font_color, self.bg_color)
-            self.frame += 1
+            self.frame += self.frame_counter
         else:
             self.end()
             text = self.font.render(''.join(self.text), True, self.font_color, self.bg_color)
         self.image.blit(text, (self.padx, self.pady))
         pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.image.get_size()], self.outline_width)
+
+    def start(self):
+        self.frame_counter = 1
+
+    def finish(self):
+        self.frame = len(self.text) * self.vel
 
     def end(self):
         self.on_end()
