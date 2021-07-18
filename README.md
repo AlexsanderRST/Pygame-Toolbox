@@ -4,6 +4,6 @@
 
 ## text:
   - ### SelectionText()
-  - ### AnimatedText()
+  - ### TypingText()
 ## dialog:
   - ### Box()
