@@ -1,4 +1,7 @@
-"""Alexsander Rosante's Creation 2021"""
+"""
+Alexsander Rosante's creation \n
+Github: https://github.com/AlexsanderRST
+"""
 
 import pygame
 from pygame.locals import *
