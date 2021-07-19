@@ -18,7 +18,7 @@ def set_fonts_dir(directory):
 class SelectionText(pygame.sprite.Sprite):
     def __init__(self,
                  text='This is a Selection Text',
-                 font_name='', font_size=32, font_color=Color('white'), font_aa=True,
+                 font='', font_size=32, font_color=Color('white'), font_aa=True,
                  bg_color=Color('black'),
                  outline=3, outline_color=Color('white'),
                  hoverline=3, hoverline_color=Color('yellow'),
@@ -26,9 +26,9 @@ class SelectionText(pygame.sprite.Sprite):
                  on_click=lambda: None):
         super().__init__()
 
-        # fonts'n'text
+        # font'n'text
         try:
-            self.font = pygame.font.Font(f'{fonts_dir}{font_name}.ttf', font_size)
+            self.font = pygame.font.Font(f'{fonts_dir}{font}.ttf', font_size)
         except FileNotFoundError:
             self.font = pygame.font.Font(None, font_size)
         self.font_size = font_size
@@ -75,7 +75,7 @@ class SelectionText(pygame.sprite.Sprite):
 class TypingText(pygame.sprite.Sprite):
     def __init__(self,
                  text="I'm an Animated Text!",
-                 font_name='', font_size=32, font_color=Color('white'), font_aa=True,
+                 font='', font_size=32, font_color=Color('white'), font_aa=True,
                  bg_color=Color('black'),
                  padx=10, pady=10,
                  vel=1,
@@ -85,9 +85,9 @@ class TypingText(pygame.sprite.Sprite):
                  ):
         super().__init__()
 
-        # fonts
+        # font
         try:
-            self.font = pygame.font.Font(f'{fonts_dir}{font_name}.ttf', font_size)
+            self.font = pygame.font.Font(f'{fonts_dir}{font}.ttf', font_size)
         except FileNotFoundError:
             self.font = pygame.font.Font(None, font_size)
 
