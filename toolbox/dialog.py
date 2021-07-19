@@ -126,3 +126,39 @@ class NameBox(pygame.sprite.Sprite):
     def update(self):
         self.group.update()
         self.group.draw(self.image)
+
+
+def draw_speech_arrow(display, fix_point, rect, bg_color, outline_color, width=50):
+    p1, p2, p3 = fix_point, 0, 0
+    if rect.top > p1[1]:
+        if rect.left > p1[0]:
+            p2 = rect.topleft
+            p3 = p2[0] + width, p2[1]
+        elif rect.right < p1[0]:
+            p2 = rect.topright
+            p3 = p2[0] - width, p2[1]
+        else:
+            p2 = rect.centerx - width / 2, rect.top
+            p3 = rect.centerx + width / 2, rect.top
+    elif rect.bottom < p1[1]:
+        if rect.left > p1[0]:
+            p2 = rect.bottomleft
+            p3 = p2[0] + width, p2[1]
+        elif rect.right < p1[0]:
+            p2 = rect.bottomright
+            p3 = p2[0] - width, p2[1]
+        else:
+            p2 = rect.centerx - width / 2, rect.bottom
+            p3 = rect.centerx + width / 2, rect.bottom
+    else:
+        if rect.left > p1[0]:
+            p2 = rect.left, rect.centery - width / 2
+            p3 = rect.left, rect.centery + width / 2
+        elif rect.right < p1[0]:
+            p2 = rect.right, rect.centery - width / 2
+            p3 = rect.right, rect.centery + width / 2
+        else:
+            return
+    pygame.draw.polygon(display, bg_color, (p1, p2, p3))
+    pygame.draw.polygon(display, outline_color, (p1, p2, p3), 3)
+    pygame.draw.line(display, bg_color, p2, p3, 3)
