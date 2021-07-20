@@ -128,7 +128,7 @@ class NameBox(pygame.sprite.Sprite):
         self.group.draw(self.image)
 
 
-def draw_speech_arrow(display, fix_point, rect, bg_color, outline_color, width=50):
+def get_speech_arrow_points(fix_point, rect, width):
     p1, p2, p3 = fix_point, 0, 0
     if rect.top > p1[1]:
         if rect.left > p1[0]:
@@ -158,7 +158,17 @@ def draw_speech_arrow(display, fix_point, rect, bg_color, outline_color, width=5
             p2 = rect.right, rect.centery - width / 2
             p3 = rect.right, rect.centery + width / 2
         else:
-            return
-    pygame.draw.polygon(display, bg_color, (p1, p2, p3))
-    pygame.draw.polygon(display, outline_color, (p1, p2, p3), 3)
-    pygame.draw.line(display, bg_color, p2, p3, 3)
+            return False
+    return p1, p2, p3
+
+
+def draw_speech_arrow(display, fix_point, rect,
+                      bg_color=Color('white'), outline_color=Color('black'),
+                      width=50):
+    try:
+        p1, p2, p3 = get_speech_arrow_points(fix_point, rect, width)
+        pygame.draw.polygon(display, bg_color, (p1, p2, p3))
+        pygame.draw.polygon(display, outline_color, (p1, p2, p3), 3)
+        pygame.draw.line(display, bg_color, p2, p3, 3)
+    except TypeError:
+        return
