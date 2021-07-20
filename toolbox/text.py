@@ -23,6 +23,7 @@ class SelectionText(pygame.sprite.Sprite):
                  outline=3, outline_color=Color('white'),
                  hoverline=3, hoverline_color=Color('yellow'),
                  padx=10, pady=10,
+                 icon='', icon_dir='images/', icon_ext='.png', icon_pos='',
                  on_click=lambda: None):
         super().__init__()
 
@@ -38,9 +39,6 @@ class SelectionText(pygame.sprite.Sprite):
         self.text = text
         self.font_aa = font_aa
         self.padx, self.pady = padx, pady
-        text = self.font.render(self.text, self.font_aa, self.font_color)
-        self.w = text.get_width() + 2 * self.padx
-        self.h = text.get_height() + 2 * self.pady
         self.bg_color = bg_color
         self.outline_width = 3
         self.outline_color = self.bg_color
@@ -48,7 +46,35 @@ class SelectionText(pygame.sprite.Sprite):
         self.hoverline_color = hoverline_color
         self.on_click = on_click
 
-        # image and rect
+        # text rect
+        self.text_surf = self.font.render(self.text, self.font_aa, self.font_color)
+        self.text_rect = self.text_surf.get_rect(topleft=(self.padx, self.pady))
+
+        # gets text size
+        text_w, text_h = self.font.size(self.text)
+
+        # icon
+        self.icon = pygame.Surface((1, 1), SRCALPHA)
+        self.icon_rect = pygame.Rect(self.padx, self.pady, 1, 1)
+        icon_width = 0
+        if icon:
+            try:
+                self.icon = pygame.image.load(f'{icon_dir}{icon}{icon_ext}').convert_alpha()
+                self.icon = pygame.transform.smoothscale(self.icon, (text_h, text_h))
+                icon_width = self.icon.get_width() + self.padx
+                if icon_pos == 'right':
+                    self.text_rect.left = self.padx
+                    self.icon_rect.left = self.text_rect.right + self.padx
+                else:
+                    self.text_rect.left = self.padx + icon_width
+            except FileNotFoundError:
+                pass
+
+        # width and height
+        self.w = text_w + 2 * self.padx + icon_width
+        self.h = text_h + 2 * self.pady
+
+        # image'n'rect
         self.image = pygame.Surface((self.w, self.h))
         self.rect = self.image.get_rect()
 
@@ -58,13 +84,15 @@ class SelectionText(pygame.sprite.Sprite):
             self.outline_color = outline_color
 
     def update(self):
-        self.image = pygame.Surface((self.w, self.h))
-        self.image.fill(self.bg_color)
-        self.image.blit(self.font.render(self.text, self.font_aa, self.font_color), (self.padx, self.pady))
+        self.image = pygame.Surface((self.w, self.h), SRCALPHA)
+        rect = [0, 0, self.w, self.h]
+        pygame.draw.rect(self.image, self.bg_color, rect)
+        self.image.blit(self.icon, self.icon_rect)
+        self.image.blit(self.text_surf, self.text_rect)
         if self.hovered():
-            pygame.draw.rect(self.image, self.hoverline_color, (0, 0, self.w, self.h), self.hoverline_width)
+            pygame.draw.rect(self.image, self.hoverline_color, rect, self.hoverline_width)
         else:
-            pygame.draw.rect(self.image, self.outline_color, (0, 0, self.w, self.h), self.outline_width)
+            pygame.draw.rect(self.image, self.outline_color, rect, self.outline_width)
 
     def hovered(self):
         if self.rect.collidepoint(pygame.mouse.get_pos()):
