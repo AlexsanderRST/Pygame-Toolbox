@@ -22,7 +22,7 @@ class SelectionText(pygame.sprite.Sprite):
                  bg_color=Color('black'),
                  outline=3, outline_color=Color('white'),
                  hoverline=3, hoverline_color=Color('yellow'),
-                 padx=10, pady=10,
+                 padx=10, pady=10, border_radius=-1,
                  icon='', icon_dir='images/', icon_ext='.png', icon_pos='',
                  on_click=lambda: None):
         super().__init__()
@@ -36,9 +36,9 @@ class SelectionText(pygame.sprite.Sprite):
         self.font_color = font_color
 
         # properties
-        self.text = text
         self.font_aa = font_aa
         self.padx, self.pady = padx, pady
+        self.border_radius = border_radius
         self.bg_color = bg_color
         self.outline_width = 3
         self.outline_color = self.bg_color
@@ -47,11 +47,11 @@ class SelectionText(pygame.sprite.Sprite):
         self.on_click = on_click
 
         # text rect
-        self.text_surf = self.font.render(self.text, self.font_aa, self.font_color)
+        self.text_surf = self.font.render(text, self.font_aa, self.font_color)
         self.text_rect = self.text_surf.get_rect(topleft=(self.padx, self.pady))
 
         # gets text size
-        text_w, text_h = self.font.size(self.text)
+        text_w, text_h = self.text_rect.size
 
         # icon
         self.icon = pygame.Surface((1, 1), SRCALPHA)
@@ -86,13 +86,13 @@ class SelectionText(pygame.sprite.Sprite):
     def update(self):
         self.image = pygame.Surface((self.w, self.h), SRCALPHA)
         rect = [0, 0, self.w, self.h]
-        pygame.draw.rect(self.image, self.bg_color, rect)
+        pygame.draw.rect(self.image, self.bg_color, rect, 0, self.border_radius)
         self.image.blit(self.icon, self.icon_rect)
         self.image.blit(self.text_surf, self.text_rect)
         if self.hovered():
-            pygame.draw.rect(self.image, self.hoverline_color, rect, self.hoverline_width)
+            pygame.draw.rect(self.image, self.hoverline_color, rect, self.hoverline_width, self.border_radius)
         else:
-            pygame.draw.rect(self.image, self.outline_color, rect, self.outline_width)
+            pygame.draw.rect(self.image, self.outline_color, rect, self.outline_width, self.border_radius)
 
     def hovered(self):
         if self.rect.collidepoint(pygame.mouse.get_pos()):
