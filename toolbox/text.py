@@ -10,9 +10,9 @@ from pygame.locals import *
 fonts_dir = 'fonts/'
 
 
-def set_fonts_dir(directory):
+def set_fonts_dir(path):
     global fonts_dir
-    fonts_dir = directory
+    fonts_dir = path
 
 
 class SelectionText(pygame.sprite.Sprite):

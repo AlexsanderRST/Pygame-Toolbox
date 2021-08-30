@@ -5,7 +5,7 @@ Github: https://github.com/AlexsanderRST
 
 import pygame
 from pygame.locals import *
-from toolbox.text import TypingText
+from codes.toolbox.text import TypingText, set_fonts_dir
 
 
 class Box(pygame.sprite.Sprite):
@@ -14,9 +14,10 @@ class Box(pygame.sprite.Sprite):
                  font='', font_size=32, font_color=Color('white'), font_aa=True,
                  bg_color=Color('darkblue'),
                  width=0,
-                 padx=10, pady=10, space=3,
+                 padx=10, pady=10, space=3, border_radius=-1,
                  outline=0, outline_color=Color('white'),
-                 typing_vel=5):
+                 typing_vel=5,
+                 on_end=lambda: None):
         super().__init__()
 
         # properties
@@ -25,6 +26,9 @@ class Box(pygame.sprite.Sprite):
         self.padx, self.pady = padx, pady
         self.outline_width = 1
         self.outline_color = bg_color
+        self.border_r = border_radius
+
+        # default box
         text_dict = {'font': font, 'font_size': font_size, 'font_color': font_color, 'font_aa': font_aa,
                      'bg_color': self.bg_color,
                      'vel': typing_vel,
@@ -39,6 +43,8 @@ class Box(pygame.sprite.Sprite):
             else:
                 line = TypingText(text=dialog[i], start_at_init=False, **text_dict)
                 last_line.on_end = line.start
+                if i == len(dialog) - 1:
+                    line.on_end = on_end
             last_line = line
             line.rect.topleft = padx, last_bottom
             last_bottom = line.rect.bottom + space
@@ -63,9 +69,13 @@ class Box(pygame.sprite.Sprite):
             self.outline_width = outline
             self.outline_color = outline_color
 
+    def set_on_end(self, new_function):
+        self.lines.sprites()[-1].on_end = new_function
+
     def update(self):
-        pygame.draw.rect(self.image, self.bg_color, [0, 0, *self.rect.size])
-        pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.rect.size], self.outline_width)
+        rect = pygame.Rect([0, 0, *self.rect.size])
+        pygame.draw.rect(self.image, self.bg_color, rect, border_radius=self.border_r)
+        pygame.draw.rect(self.image, self.outline_color, rect, self.outline_width, border_radius=self.border_r)
         self.lines.update()
         self.lines.draw(self.image)
 
