@@ -3,43 +3,44 @@ Alexsander Rosante's creation \n
 Github: https://github.com/AlexsanderRST
 """
 
-import pygame
 from pygame.locals import *
+
+import pygame
 
 font_directory = 'fonts/'
 icon_directory = 'images/'
 
 
-class Button(pygame.sprite.Sprite):
+hovered = pygame.sprite.Group()
 
+
+class Pressing(pygame.sprite.Sprite):
     def __init__(self,
-                 game,
                  width=0,
                  height=0,
                  depth=10,
-                 color=(178, 34, 34),
-                 color_above=(193, 78, 78),
-                 color_pressed=(142, 27, 27),
-                 color_below=(65, 65, 65),
+                 color='#b22222',
+                 color_above='#c14e4e',
+                 color_pressed='#8e1b1b',
+                 color_below='#414141',
+                 font_path='',
+                 sysfont='',
                  text='',
                  text_size=0,
-                 text_color=(255, 255, 255),
-                 text_font='',
-                 text_sysfont='',
+                 text_color='white',
                  text_at_left=False,
                  text_at_right=False,
                  aatext=True,
-                 icon='',
+                 icon_path='',
                  icon_size=0,
                  icon_fit=False,
                  icon_centered=True,
                  icon_at_left=True,
-                 command=lambda: None,
+                 on_click=lambda: None,
                  interactive=True):
         super().__init__()
-        self.game = game
 
-        self.command = command
+        self.on_click = on_click
 
         if width <= 0:
             width = 240
@@ -58,9 +59,9 @@ class Button(pygame.sprite.Sprite):
         above = pygame.Surface((width, depth))
         above.fill(color_above)
         above_rect = above.get_rect()
-        self.idle_surf = self.image.copy()
-        self.idle_surf.blit(front, front_rect)
-        self.idle_surf.blit(above, above_rect)
+        self.surf_idle = self.image.copy()
+        self.surf_idle.blit(front, front_rect)
+        self.surf_idle.blit(above, above_rect)
 
         # pushed surf
         front.fill(color_pressed)
@@ -68,9 +69,9 @@ class Button(pygame.sprite.Sprite):
         below = pygame.Surface((width, depth))
         below.fill(color_below)
         below_rect = below.get_rect(top=height)
-        self.pressed_surf = self.image.copy()
-        self.pressed_surf.blit(front, front_rect)
-        self.pressed_surf.blit(below, below_rect)
+        self.surf_pressed = self.image.copy()
+        self.surf_pressed.blit(front, front_rect)
+        self.surf_pressed.blit(below, below_rect)
 
         # text and icon
         text_surf = pygame.Surface((1, 1))
@@ -79,21 +80,20 @@ class Button(pygame.sprite.Sprite):
             if not text_size:
                 text_size = round(8 / 15 * height)
             # font load
-            font = pygame.font.SysFont('Arial', text_size)
-            if text_font:
+            font = pygame.font.Font(None, text_size)
+            if font_path:
                 try:
-                    font = pygame.font.Font('{0}{1}.ttf'.format(font_directory, text_font), text_size)
+                    font = pygame.font.Font(font_path, text_size)
                 except FileNotFoundError:
                     pass
-            elif text_sysfont:
-                font = pygame.font.SysFont(text_sysfont, text_size)
-
+            elif sysfont:
+                font = pygame.font.SysFont(sysfont, text_size)
             text_surf = font.render(text, aatext, text_color)
 
-        if icon:
+        if icon_path:
             # create icon surf
             try:
-                icon_surf = pygame.image.load('{0}{1}.png'.format(icon_directory, icon))
+                icon_surf = pygame.image.load(icon_path)
             except FileNotFoundError:
                 icon_surf = pygame.Surface((10, 10), SRCALPHA)
             # resize icon surf to fit at button and create it's rect
@@ -118,7 +118,7 @@ class Button(pygame.sprite.Sprite):
                 # text_rect
                 text_rect = text_surf.get_rect()
                 # icon and text position set
-                for i in ((self.idle_surf, depth), (self.pressed_surf, 0)):
+                for i in ((self.surf_idle, depth), (self.surf_pressed, 0)):
                     front_rect.top = i[1]
                     if icon_at_left:
                         icon_rect.left = border_dist
@@ -132,7 +132,7 @@ class Button(pygame.sprite.Sprite):
                     i[0].blit(text_surf, text_rect)
             else:
                 # icon surf position set
-                for i in ((self.idle_surf, depth), (self.pressed_surf, 0)):
+                for i in ((self.surf_idle, depth), (self.surf_pressed, 0)):
                     front_rect.top = i[1]
                     if icon_centered:
                         icon_rect.centerx = front_rect.centerx
@@ -152,7 +152,7 @@ class Button(pygame.sprite.Sprite):
             # text rect
             text_rect = text_surf.get_rect()
             # text surf position set
-            for i in ((self.idle_surf, depth), (self.pressed_surf, 0)):
+            for i in ((self.surf_idle, depth), (self.surf_pressed, 0)):
                 front_rect.top = i[1]
                 if text_at_left:
                     text_rect.left = border_dist
@@ -167,23 +167,61 @@ class Button(pygame.sprite.Sprite):
         self.interaction = lambda: None
         if interactive:
             self.interaction = self.interactive
-            self.game.button_collision = pygame.sprite.Group()
 
-        self.image = self.idle_surf.copy()
+        # define image
+        self.image = self.surf_idle.copy()
+
+    def update(self, events):
+        self.interaction(events)
+
+    def interactive(self, events):
+        global hovered
+        if not self.rect.collidepoint(pygame.mouse.get_pos()):
+            self.image = self.surf_idle.copy()
+            hovered.remove(self)
+        else:
+            for event in events:
+                if event.type == MOUSEBUTTONDOWN:
+                    self.image = self.surf_pressed.copy()
+                elif event.type == MOUSEBUTTONUP:
+                    self.image = self.surf_idle.copy()
+                    self.on_click()
+            hovered.add(self)
+
+
+class Hover(pygame.sprite.Sprite):
+    def __init__(self,
+                 width=250,
+                 height=100,
+                 color='#cc0000',
+                 color_hovered='#f20000',
+                 text='',
+                 text_size=32,
+                 text_color='white',
+                 text_font=None,
+                 on_click=lambda: None):
+        super().__init__()
+        self.surf_idle = pygame.Surface((width, height))
+        self.surf_idle.fill(color)
+        self.surf_hovered = pygame.Surface((width, height))
+        self.surf_hovered.fill(color_hovered)
+        self.image = self.surf_idle
+        self.rect = self.image.get_rect()
+        self.on_click = on_click
+
+        # text
+        if text:
+            font = pygame.font.Font(text_font, text_size)
+            text = font.render(text, True, text_color)
+            text_rect = text.get_rect(center=(width/2, height/2))
+            self.surf_idle.blit(text, text_rect)
+            self.surf_hovered.blit(text, text_rect)
 
     def update(self):
-        self.interaction()
-
-    def interactive(self):
-        mouse_pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(mouse_pos):
-            self.game.button_collision.add(self)
-            for event in self.game.events:
-                if event.type == MOUSEBUTTONDOWN:
-                    self.image = self.pressed_surf.copy()
-                elif event.type == MOUSEBUTTONUP:
-                    self.command()
-                    self.image = self.idle_surf.copy()
+        global hovered
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            self.image = self.surf_hovered
+            hovered.add(self)
         else:
-            self.image = self.idle_surf.copy()
-            self.game.button_collision.remove(self)
+            self.image = self.surf_idle
+            hovered.remove(self)
