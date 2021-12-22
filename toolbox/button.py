@@ -217,7 +217,7 @@ class Hover(pygame.sprite.Sprite):
             self.surf_idle.blit(text, text_rect)
             self.surf_hovered.blit(text, text_rect)
 
-    def update(self):
+    def update(self, *_):
         global hovered
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.image = self.surf_hovered
