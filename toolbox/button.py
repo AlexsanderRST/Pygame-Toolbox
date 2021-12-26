@@ -198,7 +198,7 @@ class Hover(pygame.sprite.Sprite):
                  text='',
                  text_size=32,
                  text_color='white',
-                 text_font=None,
+                 font_path=None,
                  on_click=lambda: None):
         super().__init__()
         self.surf_idle = pygame.Surface((width, height))
@@ -211,17 +211,66 @@ class Hover(pygame.sprite.Sprite):
 
         # text
         if text:
-            font = pygame.font.Font(text_font, text_size)
+            font = pygame.font.Font(font_path, text_size)
             text = font.render(text, True, text_color)
             text_rect = text.get_rect(center=(width/2, height/2))
             self.surf_idle.blit(text, text_rect)
             self.surf_hovered.blit(text, text_rect)
 
-    def update(self, *_):
+    def update(self, events):
         global hovered
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.image = self.surf_hovered
             hovered.add(self)
+            for event in events:
+                if event.type == MOUSEBUTTONUP and event.button == 1:
+                    self.on_click()
+        else:
+            self.image = self.surf_idle
+            hovered.remove(self)
+
+
+class Underline(pygame.sprite.Sprite):
+    def __init__(self,
+                 text,
+                 text_color='gray',
+                 text_color_hovered='white',
+                 text_size=32,
+                 color='black',
+                 offset=10,
+                 line_height=1,
+                 line_color='white',
+                 line_spaccing=3,
+                 font_path=None,
+                 on_click=lambda: None):
+        super().__init__()
+        font = pygame.font.Font(font_path, text_size)
+        width = font.size(text)[0] + offset * 2
+        height = font.size(text)[1] + offset * 2 + line_spaccing + line_height
+        self.surf_idle = pygame.Surface((width, height))
+        self.surf_idle.fill(color)
+        self.surf_hovered = self.surf_idle.copy()
+        text_surf = font.render(text, True, text_color)
+        text_rect = text_surf.get_rect(topleft=(offset, offset))
+        self.surf_idle.blit(text_surf, text_rect)
+        text_surf = font.render(text, True, text_color_hovered)
+        self.surf_hovered.blit(text_surf, text_rect)
+        line = pygame.Surface((text_rect.width, line_height))
+        line.fill(line_color)
+        line_rect = line.get_rect(topleft=(offset, text_rect.bottom + line_spaccing))
+        self.surf_hovered.blit(line, line_rect)
+        self.image = self.surf_idle.copy()
+        self.rect = self.image.get_rect()
+        self.on_click = on_click
+
+    def update(self, events):
+        global hovered
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            self.image = self.surf_hovered
+            hovered.add(self)
+            for event in events:
+                if event.type == MOUSEBUTTONUP and event.button == 1:
+                    self.on_click()
         else:
             self.image = self.surf_idle
             hovered.remove(self)
