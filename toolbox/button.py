@@ -26,8 +26,8 @@ class Pressing(pygame.sprite.Sprite):
                  font_path='',
                  sysfont='',
                  text='',
-                 text_size=0,
                  text_color='white',
+                 text_size=0,
                  text_at_left=False,
                  text_at_right=False,
                  aatext=True,
@@ -196,8 +196,8 @@ class Hover(pygame.sprite.Sprite):
                  color='#cc0000',
                  color_hovered='#f20000',
                  text='',
-                 text_size=32,
                  text_color='white',
+                 text_size=32,
                  font_path=None,
                  on_click=lambda: None):
         super().__init__()
@@ -244,7 +244,7 @@ class Underline(pygame.sprite.Sprite):
                  font_path=None,
                  on_click=lambda: None):
         super().__init__()
-        font = pygame.font.Font(font_path, text_size)
+        font = pygame.font.Font(font_path, round(text_size))
         width = font.size(text)[0] + offset * 2
         height = font.size(text)[1] + offset * 2 + line_spaccing + line_height
         self.surf_idle = pygame.Surface((width, height))

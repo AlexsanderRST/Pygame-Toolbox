@@ -4,138 +4,16 @@ Github: https://github.com/AlexsanderRST
 """
 
 import pygame
-from pygame.locals import *
-from codes.toolbox.text import TypingText, set_fonts_dir
 
 
-class Box(pygame.sprite.Sprite):
-    def __init__(self,
-                 dialog=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
-                 font='', font_size=32, font_color=Color('white'), font_aa=True,
-                 bg_color=Color('darkblue'),
-                 width=0,
-                 padx=10, pady=10, space=3, border_radius=-1,
-                 outline=0, outline_color=Color('white'),
-                 typing_vel=5,
-                 on_end=lambda: None):
-        super().__init__()
-
-        # properties
-        self.lines = pygame.sprite.Group()
-        self.bg_color = bg_color
-        self.padx, self.pady = padx, pady
-        self.outline_width = 1
-        self.outline_color = bg_color
-        self.border_r = border_radius
-
-        # default box
-        text_dict = {'font': font, 'font_size': font_size, 'font_color': font_color, 'font_aa': font_aa,
-                     'bg_color': self.bg_color,
-                     'vel': typing_vel,
-                     'padx': 0, 'pady': 0}
-
-        # lines
-        last_line = None
-        last_bottom = pady
-        for i in range(len(dialog)):
-            if i == 0:
-                line = TypingText(text=dialog[i], **text_dict)
-            else:
-                line = TypingText(text=dialog[i], start_at_init=False, **text_dict)
-                last_line.on_end = line.start
-                if i == len(dialog) - 1:
-                    line.on_end = on_end
-            last_line = line
-            line.rect.topleft = padx, last_bottom
-            last_bottom = line.rect.bottom + space
-            self.lines.add(line)
-
-        # gets surf width
-        if not width:
-            for line in self.lines:
-                if line.image.get_width() > width:
-                    width = line.image.get_width()
-            width += 2 * padx
-
-        # gets surf height
-        height = self.lines.sprites()[-1].rect.bottom - self.lines.sprites()[0].rect.top + 2 * pady
-
-        # image'n'rect
-        self.image = pygame.Surface((width, height), SRCALPHA)
-        self.rect = self.image.get_rect()
-
-        # outline
-        if outline:
-            self.outline_width = outline
-            self.outline_color = outline_color
-
-    def set_on_end(self, new_function):
-        self.lines.sprites()[-1].on_end = new_function
-
-    def update(self):
-        rect = pygame.Rect([0, 0, *self.rect.size])
-        pygame.draw.rect(self.image, self.bg_color, rect, border_radius=self.border_r)
-        pygame.draw.rect(self.image, self.outline_color, rect, self.outline_width, border_radius=self.border_r)
-        self.lines.update()
-        self.lines.draw(self.image)
-
-
-class NameBox(pygame.sprite.Sprite):
-    def __init__(self,
-                 dialog=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
-                 font='', font_size=32, font_color=Color('white'), font_aa=True,
-                 bg_color=Color('darkblue'),
-                 width=0,
-                 padx=10, pady=10, space=3,
-                 outline=0, outline_color=Color('white'),
-                 typing_vel=5,
-                 name='', name_pos='',
-                 name_font='', name_size=0, name_color=Color('white'),
-                 name_bg=Color('blue'),
-                 ):
-        super().__init__()
-
-        self.group = pygame.sprite.Group()
-
-        # name
-        name_height = 0
-        if name:
-            if not name_font:
-                name_font = font
-            if not name_size:
-                name_size = font_size
-            name = TypingText(text=name,
-                              font=name_font, font_size=name_size, font_color=name_color,
-                              bg_color=name_bg,
-                              finish_at_init=True,
-                              )
-            name_height = name.rect.h
-            self.group.add(name)
-
-        # box
-        box = Box(dialog,
-                  font, font_size, font_color, font_aa,
-                  bg_color,
-                  width,
-                  padx, pady, space,
-                  outline, outline_color,
-                  typing_vel)
-        box.rect.top = name_height
-        self.group.add(box)
-
-        # gets surf width
-        if name_height > 0:
-            if box.rect.w > name.rect.w:
-                width = box.rect.w
-            else:
-                width = name.rect.w
-
-        self.image = pygame.Surface((width, box.rect.height + name_height), SRCALPHA)
-        self.rect = self.image.get_rect()
-
-    def update(self):
-        self.group.update()
-        self.group.draw(self.image)
+def draw_speech_arrow(display, fix_point, rect, bg_color='white', outline_color='black', width=50):
+    try:
+        p1, p2, p3 = get_speech_arrow_points(fix_point, rect, width)
+        pygame.draw.polygon(display, bg_color, (p1, p2, p3))
+        pygame.draw.polygon(display, outline_color, (p1, p2, p3), 3)
+        pygame.draw.line(display, bg_color, p2, p3, 3)
+    except TypeError:
+        return
 
 
 def get_speech_arrow_points(fix_point, rect, width):
@@ -172,13 +50,239 @@ def get_speech_arrow_points(fix_point, rect, width):
     return p1, p2, p3
 
 
-def draw_speech_arrow(display, fix_point, rect,
-                      bg_color=Color('white'), outline_color=Color('black'),
-                      width=50):
-    try:
-        p1, p2, p3 = get_speech_arrow_points(fix_point, rect, width)
-        pygame.draw.polygon(display, bg_color, (p1, p2, p3))
-        pygame.draw.polygon(display, outline_color, (p1, p2, p3), 3)
-        pygame.draw.line(display, bg_color, p2, p3, 3)
-    except TypeError:
-        return
+class Box(pygame.sprite.Sprite):
+    def __init__(self,
+                 lines=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
+                 width=0,
+                 text_color='white',
+                 text_size=32,
+                 text_aa=True,
+                 font_path=None,
+                 bg_color='darkblue',
+                 offset=6,
+                 spaccing=2,
+                 border_radius=-1,
+                 outline=0,
+                 outline_color='white',
+                 typing_vel=1,
+                 on_end=lambda: None):
+        super().__init__()
+
+        # properties
+        self.lines = pygame.sprite.Group()
+        self.bg_color = bg_color
+        # self.padx, self.pady = padx, pady
+        self.offset = offset
+        self.outline_width = 1
+        self.outline_color = bg_color
+        self.border_r = border_radius
+
+        # default box
+        text_dict = {'text_color': text_color,
+                     'text_size': text_size,
+                     'text_aa': text_aa,
+                     'font_path': font_path,
+                     'bg_color': bg_color,
+                     'vel': typing_vel,
+                     'offset': offset}
+
+        # lines
+        last_line = None
+        last_bottom = offset
+        for i in range(len(lines)):
+            if i == 0:
+                line = TypingText(text=lines[i], **text_dict)
+            else:
+                line = TypingText(text=lines[i], start_at_init=False, **text_dict)
+                last_line.on_end = line.start
+                if i == len(lines) - 1:
+                    line.on_end = on_end
+            last_line = line
+            line.rect.topleft = offset, last_bottom
+            last_bottom = line.rect.bottom + spaccing
+            self.lines.add(line)
+
+        # gets surf width
+        if not width:
+            for line in self.lines:
+                if line.image.get_width() > width:
+                    width = line.image.get_width()
+            width += 2 * offset
+
+        # gets surf height
+        height = self.lines.sprites()[-1].rect.bottom - self.lines.sprites()[0].rect.top + 2 * offset
+
+        # image'n'rect
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.rect = self.image.get_rect()
+
+        # outline
+        if outline:
+            self.outline_width = outline
+            self.outline_color = outline_color
+
+    def set_on_end(self, new_function):
+        self.lines.sprites()[-1].on_end = new_function
+
+    def update(self):
+        rect = pygame.Rect([0, 0, *self.rect.size])
+        pygame.draw.rect(self.image, self.bg_color, rect, border_radius=self.border_r)
+        pygame.draw.rect(self.image, self.outline_color, rect, self.outline_width, border_radius=self.border_r)
+        self.lines.update()
+        self.lines.draw(self.image)
+
+
+class NameBox(pygame.sprite.Sprite):
+    def __init__(self,
+                 lines=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
+                 width=0,
+                 text_color='white',
+                 text_size=32,
+                 text_aa=True,
+                 font_path=None,
+                 bg_color='darkblue',
+                 name='',
+                 name_color='white',
+                 name_size=0,
+                 name_bg_color='blue',
+                 name_pos='left',
+                 name_font_path: int = 'match',
+                 offset=6,
+                 spaccing=2,
+                 border_radius=-1,
+                 outline=0,
+                 outline_color='white',
+                 typing_vel=1):
+        super().__init__()
+
+        self.group = pygame.sprite.Group()
+
+        # name
+        name_height = 0
+        if name:
+            if name_font_path == 'match':
+                name_font_path = font_path
+            if name_size == 'match':
+                name_size = text_size
+            name = TypingText(text=name,
+                              text_color=name_color,
+                              text_size=name_size,
+                              font_path=name_font_path,
+                              bg_color=name_bg_color,
+                              finish_at_init=True)
+            name_height = name.rect.h
+            self.group.add(name)
+
+        # box
+        box = Box(
+            lines,
+            width,
+            text_color,
+            text_size,
+            text_aa,
+            font_path,
+            bg_color,
+            offset,
+            spaccing,
+            border_radius,
+            outline,
+            outline_color,
+            typing_vel)
+
+        box.rect.top = name_height
+        self.group.add(box)
+
+        # gets surf width
+        if name_height > 0:
+            if box.rect.w > name.rect.w:
+                width = box.rect.w
+            else:
+                width = name.rect.w
+
+        self.image = pygame.Surface((width, box.rect.height + name_height), pygame.SRCALPHA)
+        self.rect = self.image.get_rect()
+
+    def update(self):
+        self.group.update()
+        self.group.draw(self.image)
+
+
+class TypingText(pygame.sprite.Sprite):
+    def __init__(self,
+                 text="I'm an Animated Text!",
+                 text_color='white',
+                 text_size=32,
+                 text_aa=True,
+                 font_path=None,
+                 bg_color='black',
+                 offset=10,
+                 vel=1,
+                 outline=0,
+                 outline_color='white',
+                 start_at_init=True,
+                 finish_at_init=False,
+                 on_end=lambda: None
+                 ):
+        super().__init__()
+
+        # font
+        try:
+            self.font = pygame.font.Font(font_path, text_size)
+        except FileNotFoundError:
+            self.font = pygame.font.Font(None, text_size)
+
+        # properties
+        self.text = list(text)
+        # self.padx, self.pady = padx, pady
+        self.offset = offset
+        self.frame = 0
+        self.frame_counter = 0
+        self.vel = vel
+        self.bg_color = bg_color
+        self.text_color = text_color
+        self.text_aa = text_aa
+        self.outline_width = 1
+        self.outline_color = bg_color
+        self.on_end = on_end
+
+        # get text size
+        text = self.font.render(''.join(self.text), self.text_aa, 'black')
+
+        # image'n'rect
+        self.image = pygame.Surface(
+            (text.get_width() + 2 * self.offset, text.get_height() + 2 * self.offset))
+        self.rect = self.image.get_rect()
+
+        # outline setup
+        if outline:
+            self.outline_width = outline
+            self.outline_color = outline_color
+
+        # initial state managment
+        if finish_at_init:
+            self.finish()
+        elif start_at_init:
+            self.start()
+
+    def start(self):
+        self.frame_counter = 1
+
+    def finish(self):
+        self.frame = len(self.text) * self.vel
+
+    def end(self):
+        self.on_end()
+        self.on_end = lambda: None
+
+    def update(self):
+        self.image.fill(self.bg_color)
+        if self.frame < len(self.text) * self.vel:
+            text = self.font.render(
+                ''.join(self.text[:self.frame//self.vel]), self.text_aa, self.text_color, self.bg_color)
+            self.frame += self.frame_counter
+        else:
+            self.end()
+            text = self.font.render(
+                ''.join(self.text), self.text_aa, self.text_color, self.bg_color)
+        self.image.blit(text, 2 * [self.offset])
+        pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.image.get_size()], self.outline_width)
