@@ -143,11 +143,12 @@ class NameBox(pygame.sprite.Sprite):
                  bg_color='darkblue',
                  name='',
                  name_color='white',
-                 name_size=0,
+                 name_size='match',
                  name_bg_color='blue',
                  name_pos='left',
                  name_font_path: int = 'match',
                  offset=6,
+                 name_offset=4,
                  spaccing=2,
                  border_radius=-1,
                  outline=0,
@@ -169,35 +170,31 @@ class NameBox(pygame.sprite.Sprite):
                               text_size=name_size,
                               font_path=name_font_path,
                               bg_color=name_bg_color,
+                              offset=name_offset,
                               finish_at_init=True)
             name_height = name.rect.h
             self.group.add(name)
 
         # box
-        box = Box(
-            lines,
-            width,
-            text_color,
-            text_size,
-            text_aa,
-            font_path,
-            bg_color,
-            offset,
-            spaccing,
-            border_radius,
-            outline,
-            outline_color,
-            typing_vel)
+        box = Box(lines, width, text_color, text_size, text_aa, font_path, bg_color,
+                  offset, spaccing, border_radius, outline, outline_color, typing_vel)
 
         box.rect.top = name_height
         self.group.add(box)
 
-        # gets surf width
+        # name exists
         if name_height > 0:
-            if box.rect.w > name.rect.w:
-                width = box.rect.w
-            else:
-                width = name.rect.w
+            width = box.rect.w if box.rect.w > name.rect.w else name.rect.w
+            box.rect.top = name.rect.bottom
+            # name positioning
+            match name_pos:
+                case 'right':
+                    name.rect.right = width
+                case 'center':
+                    name.rect.centerx = round(width / 2)
+            #
+        else:
+            width = box.rect.w
 
         self.image = pygame.Surface((width, box.rect.height + name_height), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
@@ -233,7 +230,6 @@ class TypingText(pygame.sprite.Sprite):
 
         # properties
         self.text = list(text)
-        # self.padx, self.pady = padx, pady
         self.offset = offset
         self.frame = 0
         self.frame_counter = 0
