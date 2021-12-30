@@ -57,6 +57,7 @@ class Box(pygame.sprite.Sprite):
                  text_color='white',
                  text_size=32,
                  text_aa=True,
+                 text_align='left',
                  font_path=None,
                  bg_color='darkblue',
                  offset=6,
@@ -71,7 +72,6 @@ class Box(pygame.sprite.Sprite):
         # properties
         self.lines = pygame.sprite.Group()
         self.bg_color = bg_color
-        # self.padx, self.pady = padx, pady
         self.offset = offset
         self.outline_width = 1
         self.outline_color = bg_color
@@ -84,7 +84,7 @@ class Box(pygame.sprite.Sprite):
                      'font_path': font_path,
                      'bg_color': bg_color,
                      'vel': typing_vel,
-                     'offset': offset}
+                     'offset': 0}
 
         # lines
         last_line = None
@@ -105,8 +105,7 @@ class Box(pygame.sprite.Sprite):
         # gets surf width
         if not width:
             for line in self.lines:
-                if line.image.get_width() > width:
-                    width = line.image.get_width()
+                width = line.rect.w if line.rect.w > width else width
             width += 2 * offset
 
         # gets surf height
@@ -115,6 +114,14 @@ class Box(pygame.sprite.Sprite):
         # image'n'rect
         self.image = pygame.Surface((width, height), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
+
+        # align
+        for line in self.lines:
+            match text_align:
+                case 'right':
+                    line.rect.right = self.rect.w - offset
+                case 'center':
+                    line.rect.centerx = round(self.rect.w / 2)
 
         # outline
         if outline:
@@ -139,6 +146,7 @@ class NameBox(pygame.sprite.Sprite):
                  text_color='white',
                  text_size=32,
                  text_aa=True,
+                 text_align='left',
                  font_path=None,
                  bg_color='darkblue',
                  name='',
@@ -176,8 +184,20 @@ class NameBox(pygame.sprite.Sprite):
             self.group.add(name)
 
         # box
-        box = Box(lines, width, text_color, text_size, text_aa, font_path, bg_color,
-                  offset, spaccing, border_radius, outline, outline_color, typing_vel)
+        box = Box(lines,
+                  width,
+                  text_color,
+                  text_size,
+                  text_aa,
+                  text_align,
+                  font_path,
+                  bg_color,
+                  offset,
+                  spaccing,
+                  border_radius,
+                  outline,
+                  outline_color,
+                  typing_vel)
 
         box.rect.top = name_height
         self.group.add(box)
@@ -233,7 +253,7 @@ class TypingText(pygame.sprite.Sprite):
         self.offset = offset
         self.frame = 0
         self.frame_counter = 0
-        self.vel = vel
+        self.vel = 1/vel * 2
         self.bg_color = bg_color
         self.text_color = text_color
         self.text_aa = text_aa
@@ -274,7 +294,7 @@ class TypingText(pygame.sprite.Sprite):
         self.image.fill(self.bg_color)
         if self.frame < len(self.text) * self.vel:
             text = self.font.render(
-                ''.join(self.text[:self.frame//self.vel]), self.text_aa, self.text_color, self.bg_color)
+                ''.join(self.text[:round(self.frame/self.vel)]), self.text_aa, self.text_color, self.bg_color)
             self.frame += self.frame_counter
         else:
             self.end()
