@@ -226,10 +226,12 @@ class NameBox(pygame.sprite.Sprite):
 
 class TypingText(pygame.sprite.Sprite):
     def __init__(self,
+                 width=0,
                  text="I'm an Animated Text!",
                  text_color='white',
                  text_size=32,
                  text_aa=True,
+                 text_align='left',
                  font_path=None,
                  bg_color='black',
                  offset=10,
@@ -257,17 +259,35 @@ class TypingText(pygame.sprite.Sprite):
         self.bg_color = bg_color
         self.text_color = text_color
         self.text_aa = text_aa
+        self.text_align = ''
         self.outline_width = 1
         self.outline_color = bg_color
         self.on_end = on_end
 
+        # generic text surf and rect
+        text_surf = self.font.render(text, text_aa, text_color)
+        self.text_rect = text_surf.get_rect()
+
         # get text size
-        text = self.font.render(''.join(self.text), self.text_aa, 'black')
+        text_w, text_h = self.font.size(text)
+
+        # get surf width
+        if not width:
+            width = text_w + 2 * offset
+        height = text_h + 2 * offset
 
         # image'n'rect
-        self.image = pygame.Surface(
-            (text.get_width() + 2 * self.offset, text.get_height() + 2 * self.offset))
+        self.image = pygame.Surface((width, height))
         self.rect = self.image.get_rect()
+
+        # align
+        match text_align:
+            case 'center':
+                self.text_rect.center = width / 2, height / 2
+            case 'right':
+                self.text_rect.midright = width - offset, height / 2
+            case _:
+                self.text_rect.midleft = offset, height / 2
 
         # outline setup
         if outline:
@@ -298,7 +318,6 @@ class TypingText(pygame.sprite.Sprite):
             self.frame += self.frame_counter
         else:
             self.end()
-            text = self.font.render(
-                ''.join(self.text), self.text_aa, self.text_color, self.bg_color)
-        self.image.blit(text, 2 * [self.offset])
+            text = self.font.render(''.join(self.text), self.text_aa, self.text_color, self.bg_color)
+        self.image.blit(text, self.text_rect)
         pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.image.get_size()], self.outline_width)
