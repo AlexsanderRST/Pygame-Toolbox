@@ -3,6 +3,8 @@ Alexsander Rosante's creation \n
 Github: https://github.com/AlexsanderRST
 """
 
+from pygame.locals import *
+
 import pygame
 
 
@@ -139,6 +141,28 @@ class Box(pygame.sprite.Sprite):
         self.lines.draw(self.image)
 
 
+class Manager(pygame.sprite.GroupSingle):
+    def __init__(self, dialogs, on_end=lambda: None):
+        super().__init__()
+        self.dialogs = dialogs
+        self.current_dialog = 0
+        self.add(self.dialogs[self.current_dialog])
+        self.on_end = on_end
+
+    def next(self):
+        if self.current_dialog + 1 >= len(self.dialogs):
+            self.on_end()
+        else:
+            self.current_dialog += 1
+            self.add(self.dialogs[self.current_dialog])
+
+    def update(self, events):
+        for event in events:
+            if event.type == MOUSEBUTTONUP:
+                self.next()
+        super().update()
+
+
 class NameBox(pygame.sprite.Sprite):
     def __init__(self,
                  lines=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
@@ -259,7 +283,6 @@ class TypingText(pygame.sprite.Sprite):
         self.bg_color = bg_color
         self.text_color = text_color
         self.text_aa = text_aa
-        self.text_align = ''
         self.outline_width = 1
         self.outline_color = bg_color
         self.on_end = on_end
