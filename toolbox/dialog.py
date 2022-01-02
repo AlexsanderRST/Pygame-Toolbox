@@ -78,6 +78,8 @@ class Box(pygame.sprite.Sprite):
         self.outline_width = 1
         self.outline_color = bg_color
         self.border_r = border_radius
+        self.on_end = on_end
+        self.ended = False
 
         # default box
         text_dict = {'text_color': text_color,
@@ -88,7 +90,7 @@ class Box(pygame.sprite.Sprite):
                      'vel': typing_vel,
                      'offset': 0}
 
-        # lines
+        # dialog lines sprites
         last_line = None
         last_bottom = offset
         for i in range(len(lines)):
@@ -97,12 +99,13 @@ class Box(pygame.sprite.Sprite):
             else:
                 line = TypingText(text=lines[i], start_at_init=False, **text_dict)
                 last_line.on_end = line.start
-                if i == len(lines) - 1:
-                    line.on_end = on_end
             last_line = line
             line.rect.topleft = offset, last_bottom
             last_bottom = line.rect.bottom + spaccing
             self.lines.add(line)
+
+        # set on end function at last sprite
+        self.set_on_end(on_end)
 
         # gets surf width
         if not width:
@@ -130,8 +133,16 @@ class Box(pygame.sprite.Sprite):
             self.outline_width = outline
             self.outline_color = outline_color
 
+    def call_on_end(self, on_end):
+        self.ended = True
+        on_end()
+
+    def end(self):
+        for line in self.lines:
+            line.finish()
+
     def set_on_end(self, new_function):
-        self.lines.sprites()[-1].on_end = new_function
+        self.lines.sprites()[-1].set_on_end(lambda: self.call_on_end(new_function))
 
     def update(self):
         rect = pygame.Rect([0, 0, *self.rect.size])
@@ -142,24 +153,37 @@ class Box(pygame.sprite.Sprite):
 
 
 class Manager(pygame.sprite.GroupSingle):
-    def __init__(self, dialogs, on_end=lambda: None):
+    def __init__(self,
+                 dialogs,
+                 on_end=lambda: None,
+                 end_at_last_dialog=True):
         super().__init__()
         self.dialogs = dialogs
         self.current_dialog = 0
         self.add(self.dialogs[self.current_dialog])
         self.on_end = on_end
+        self.ended = False
 
-    def next(self):
+        # the on_end function will be called at last dialog's end
+        if end_at_last_dialog:
+            self.dialogs[-1].set_on_end(on_end)
+
+    def next_dialog(self):
         if self.current_dialog + 1 >= len(self.dialogs):
             self.on_end()
+            self.ended = True
         else:
             self.current_dialog += 1
             self.add(self.dialogs[self.current_dialog])
 
     def update(self, events):
+        current_dialog = self.sprite
         for event in events:
-            if event.type == MOUSEBUTTONUP:
-                self.next()
+            if event.type == MOUSEBUTTONUP and not self.ended:
+                if current_dialog.ended:
+                    self.next_dialog()
+                else:
+                    current_dialog.end()
         super().update()
 
 
@@ -264,8 +288,7 @@ class TypingText(pygame.sprite.Sprite):
                  outline_color='white',
                  start_at_init=True,
                  finish_at_init=False,
-                 on_end=lambda: None
-                 ):
+                 on_end=lambda: None):
         super().__init__()
 
         # font
@@ -326,8 +349,12 @@ class TypingText(pygame.sprite.Sprite):
     def start(self):
         self.frame_counter = 1
 
+    def set_on_end(self, on_end):
+        self.on_end = on_end
+
     def finish(self):
         self.frame = len(self.text) * self.vel
+        self.end()
 
     def end(self):
         self.on_end()

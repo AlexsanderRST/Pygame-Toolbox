@@ -14,6 +14,11 @@ icon_directory = 'images/'
 hovered = pygame.sprite.Group()
 
 
+def unhovered_all():
+    global hovered
+    hovered.empty()
+
+
 class Pressing(pygame.sprite.Sprite):
     def __init__(self,
                  width=0,
