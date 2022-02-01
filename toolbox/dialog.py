@@ -154,10 +154,16 @@ class Box(pygame.sprite.Sprite):
 
 class Manager(pygame.sprite.GroupSingle):
     def __init__(self,
-                 dialogs,
+                 dialogs: list = None,
                  on_end=lambda: None,
                  end_at_last_dialog=True):
         super().__init__()
+
+        # warning dialog when dialogs is None
+        if dialogs is None:
+            dialogs = [Box(lines=['No dialogs inserted'])]
+
+        # properties
         self.dialogs = dialogs
         self.current_dialog = 0
         self.add(self.dialogs[self.current_dialog])
@@ -309,7 +315,6 @@ class TypingText(pygame.sprite.Sprite):
         self.outline_width = 1
         self.outline_color = bg_color
         self.on_end = on_end
-        self.ended = False
 
         # generic text surf and rect
         text_surf = self.font.render(text, text_aa, text_color)
@@ -359,7 +364,6 @@ class TypingText(pygame.sprite.Sprite):
 
     def end(self):
         self.on_end()
-        self.ended = True
         self.on_end = lambda: None
 
     def update(self):
