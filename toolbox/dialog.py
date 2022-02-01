@@ -315,6 +315,7 @@ class TypingText(pygame.sprite.Sprite):
         self.outline_width = 1
         self.outline_color = bg_color
         self.on_end = on_end
+        self.ended = False
 
         # generic text surf and rect
         text_surf = self.font.render(text, text_aa, text_color)
@@ -364,6 +365,7 @@ class TypingText(pygame.sprite.Sprite):
 
     def end(self):
         self.on_end()
+        self.ended = True
         self.on_end = lambda: None
 
     def update(self):
