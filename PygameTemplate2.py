@@ -4,7 +4,6 @@ Settings like screen width and height; or fps are imported
 """
 
 from pygame.locals import *
-from settings import *
 
 import pygame
 
@@ -48,5 +47,11 @@ class Game:
 
 
 if __name__ == '__main__':
+    # properties
+    version = '0.1'
+    screen_w = 1152
+    screen_h = 648
+    fps = 60
+
     game = Game()
     game.run()
