@@ -4,8 +4,8 @@ https://github.com/AlexsanderRST
 """
 
 from pygame.locals import *
-from scene import Scene
-from settings import *
+from codes.scene import Scene
+from codes.settings import *
 
 import pygame
 

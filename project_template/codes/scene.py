@@ -3,9 +3,11 @@
 https://github.com/AlexsanderRST
 """
 
-from debug import debug
+
 from pygame.locals import *
-from settings import *
+from .debug import debug
+from .settings import *
+
 
 import pygame
 
