@@ -193,8 +193,9 @@ class Manager(pygame.sprite.GroupSingle):
         super().update()
 
 
-class NameBox(pygame.sprite.Sprite):
+class NamedBox(pygame.sprite.Sprite):
     def __init__(self,
+                 name='',
                  lines=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
                  width=0,
                  text_color='white',
@@ -203,14 +204,13 @@ class NameBox(pygame.sprite.Sprite):
                  text_align='left',
                  font_path=None,
                  bg_color='darkblue',
-                 name='',
                  name_color='white',
                  name_size='match',
                  name_bg_color='blue',
                  name_pos='left',
                  name_font_path: int = 'match',
-                 offset=6,
-                 name_offset=4,
+                 offset=20,
+                 name_offset=6,
                  spaccing=2,
                  border_radius=-1,
                  outline=0,
@@ -220,57 +220,32 @@ class NameBox(pygame.sprite.Sprite):
 
         self.group = pygame.sprite.Group()
 
+        # box
+        box = Box(lines, width, text_color, text_size, text_aa,
+                  text_align, font_path, bg_color, offset, spaccing,
+                  border_radius, outline, outline_color, typing_vel)
+        self.group.add(box)
+
         # name
-        name_height = 0
         if name:
             if name_font_path == 'match':
                 name_font_path = font_path
             if name_size == 'match':
                 name_size = text_size
-            name = TypingText(text=name,
-                              text_color=name_color,
-                              text_size=name_size,
-                              font_path=name_font_path,
-                              bg_color=name_bg_color,
-                              offset=name_offset,
-                              finish_at_init=True)
-            name_height = name.rect.h
-            self.group.add(name)
-
-        # box
-        box = Box(lines,
-                  width,
-                  text_color,
-                  text_size,
-                  text_aa,
-                  text_align,
-                  font_path,
-                  bg_color,
-                  offset,
-                  spaccing,
-                  border_radius,
-                  outline,
-                  outline_color,
-                  typing_vel)
-
-        box.rect.top = name_height
-        self.group.add(box)
-
-        # name exists
-        if name_height > 0:
-            width = box.rect.w if box.rect.w > name.rect.w else name.rect.w
-            box.rect.top = name.rect.bottom
-            # name positioning
+            name_box = TypingText(text=name, text_color=name_color,
+                                  text_size=name_size, font_path=name_font_path,
+                                  bg_color=name_bg_color, offset=name_offset,
+                                  finish_at_init=True)
+            self.group.add(name_box)
+            width = box.rect.w if box.rect.w > name_box.rect.w else name_box.rect.w
+            box.rect.top = name_box.rect.bottom
             match name_pos:
-                case 'right':
-                    name.rect.right = width
                 case 'center':
-                    name.rect.centerx = round(width / 2)
-            #
-        else:
-            width = box.rect.w
+                    name_box.rect.centerx = round(width / 2)
+                case 'right':
+                    name_box.rect.right = width
 
-        self.image = pygame.Surface((width, box.rect.height + name_height), pygame.SRCALPHA)
+        self.image = pygame.Surface((width, box.rect.bottom), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
 
     def update(self):
@@ -308,7 +283,7 @@ class TypingText(pygame.sprite.Sprite):
         self.offset = offset
         self.frame = 0
         self.frame_counter = 0
-        self.vel = 1/vel * 2
+        self.vel = 1 / vel * 2
         self.bg_color = bg_color
         self.text_color = text_color
         self.text_aa = text_aa
@@ -372,7 +347,7 @@ class TypingText(pygame.sprite.Sprite):
         self.image.fill(self.bg_color)
         if self.frame < len(self.text) * self.vel:
             text = self.font.render(
-                ''.join(self.text[:round(self.frame/self.vel)]), self.text_aa, self.text_color, self.bg_color)
+                ''.join(self.text[:round(self.frame / self.vel)]), self.text_aa, self.text_color, self.bg_color)
             self.frame += self.frame_counter
         else:
             self.end()

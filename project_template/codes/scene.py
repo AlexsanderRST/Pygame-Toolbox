@@ -15,10 +15,16 @@ import pygame
 class Scene:
     def __init__(self):
         self.color_bg = 'black'
+        self.updatables = pygame.sprite.Group()
+        self.drawables = pygame.sprite.Group()
 
-    def update(self, events: list):
-        pass
+    def add(self, sprite: pygame.sprite.Sprite):
+        self.updatables.add(sprite)
+        self.drawables.add(sprite)
 
     def draw(self, surface: pygame.Surface):
         surface.fill(self.color_bg)
-        debug('Hello to all mothers :D')
+        self.drawables.draw(surface)
+
+    def update(self, events: list):
+        self.updatables.update()
