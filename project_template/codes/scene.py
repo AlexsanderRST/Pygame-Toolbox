@@ -14,7 +14,7 @@ import pygame
 
 class Scene:
     def __init__(self):
-        self.color_bg = 'black'
+        self.color_bg = 'orange'
         self.updatables = pygame.sprite.Group()
         self.drawables = pygame.sprite.Group()
 

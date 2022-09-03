@@ -67,7 +67,7 @@ class Box(pygame.sprite.Sprite):
                  border_radius=-1,
                  outline=0,
                  outline_color='white',
-                 typing_vel=1,
+                 typing_vel=1.,
                  on_end=lambda: None):
         super().__init__()
 
@@ -198,24 +198,24 @@ class NamedBox(pygame.sprite.Sprite):
                  name='',
                  lines=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
                  width=0,
-                 text_color='white',
-                 text_size=32,
+                 text_color='black',
+                 text_size=42,
                  text_aa=True,
                  text_align='left',
                  font_path=None,
-                 bg_color='darkblue',
+                 bg_color='#fbfcfa',
                  name_color='white',
                  name_size='match',
                  name_bg_color='blue',
                  name_pos='left',
-                 name_font_path: int = 'match',
+                 name_font_path='match',
                  offset=20,
-                 name_offset=6,
-                 spaccing=2,
+                 name_offset=8,
+                 spaccing=4,
                  border_radius=-1,
-                 outline=0,
-                 outline_color='white',
-                 typing_vel=1):
+                 outline=2,
+                 outline_color='#373737',
+                 typing_vel=.72):
         super().__init__()
 
         self.group = pygame.sprite.Group()
@@ -285,12 +285,12 @@ class TypingText(pygame.sprite.Sprite):
         self.frame_counter = 0
         self.vel = 1 / vel * 2
         self.bg_color = bg_color
-        self.text_color = text_color
-        self.text_aa = text_aa
+        self.text_info = [text_aa, text_color, self.bg_color]
         self.outline_width = 1
         self.outline_color = bg_color
         self.on_end = on_end
         self.ended = False
+        self.update = self.typing_anim
 
         # generic text surf and rect
         text_surf = self.font.render(text, text_aa, text_color)
@@ -336,21 +336,21 @@ class TypingText(pygame.sprite.Sprite):
 
     def finish(self):
         self.frame = len(self.text) * self.vel
+        self.typing_anim()
         self.end()
 
     def end(self):
         self.on_end()
-        self.ended = True
         self.on_end = lambda: None
+        self.update = lambda: None
+        self.ended = True
 
-    def update(self):
-        self.image.fill(self.bg_color)
-        if self.frame < len(self.text) * self.vel:
-            text = self.font.render(
-                ''.join(self.text[:round(self.frame / self.vel)]), self.text_aa, self.text_color, self.bg_color)
-            self.frame += self.frame_counter
-        else:
+    def typing_anim(self):
+        if self.frame > len(self.text) * self.vel:
             self.end()
-            text = self.font.render(''.join(self.text), self.text_aa, self.text_color, self.bg_color)
-        self.image.blit(text, self.text_rect)
-        pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.image.get_size()], self.outline_width)
+        else:
+            self.image.fill(self.bg_color)
+            text = self.font.render(''.join(self.text[:round(self.frame / self.vel)]), *self.text_info)
+            self.image.blit(text, self.text_rect)
+            pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.image.get_size()], self.outline_width)
+            self.frame += self.frame_counter
