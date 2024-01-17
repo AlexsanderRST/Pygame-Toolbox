@@ -243,15 +243,15 @@ class Underline(pygame.sprite.Sprite):
                  text_size=32,
                  color='black',
                  offset=10,
-                 line_height=1,
-                 line_color='white',
-                 line_spaccing=3,
+                 underline_height=1,
+                 underline_color='white',
+                 underline_spacing=3,
                  font_path=None,
                  on_click=lambda: None):
         super().__init__()
         font = pygame.font.Font(font_path, round(text_size))
         width = font.size(text)[0] + offset * 2
-        height = font.size(text)[1] + offset * 2 + line_spaccing + line_height
+        height = font.size(text)[1] + offset * 2 + underline_spacing + underline_height
         self.surf_idle = pygame.Surface((width, height))
         self.surf_idle.fill(color)
         self.surf_hovered = self.surf_idle.copy()
@@ -260,9 +260,9 @@ class Underline(pygame.sprite.Sprite):
         self.surf_idle.blit(text_surf, text_rect)
         text_surf = font.render(text, True, text_color_hovered)
         self.surf_hovered.blit(text_surf, text_rect)
-        line = pygame.Surface((text_rect.width, line_height))
-        line.fill(line_color)
-        line_rect = line.get_rect(topleft=(offset, text_rect.bottom + line_spaccing))
+        line = pygame.Surface((text_rect.width, underline_height))
+        line.fill(underline_color)
+        line_rect = line.get_rect(topleft=(offset, text_rect.bottom + line_spacing))
         self.surf_hovered.blit(line, line_rect)
         self.image = self.surf_idle.copy()
         self.rect = self.image.get_rect()

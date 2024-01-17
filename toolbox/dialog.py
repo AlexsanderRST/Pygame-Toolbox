@@ -63,7 +63,7 @@ class Box(pygame.sprite.Sprite):
                  font_path=None,
                  bg_color='darkblue',
                  offset=6,
-                 spaccing=2,
+                 spacing=2,
                  border_radius=-1,
                  outline=0,
                  outline_color='white',
@@ -101,7 +101,7 @@ class Box(pygame.sprite.Sprite):
                 last_line.on_end = line.start
             last_line = line
             line.rect.topleft = offset, last_bottom
-            last_bottom = line.rect.bottom + spaccing
+            last_bottom = line.rect.bottom + spacing
             self.lines.add(line)
 
         # set on end function at last sprite
@@ -211,7 +211,7 @@ class NamedBox(pygame.sprite.Sprite):
                  name_font_path='match',
                  offset=20,
                  name_offset=8,
-                 spaccing=4,
+                 spacing=4,
                  border_radius=-1,
                  outline=2,
                  outline_color='#373737',
@@ -222,7 +222,7 @@ class NamedBox(pygame.sprite.Sprite):
 
         # box
         box = Box(lines, width, text_color, text_size, text_aa,
-                  text_align, font_path, bg_color, offset, spaccing,
+                  text_align, font_path, bg_color, offset, spacing,
                   border_radius, outline, outline_color, typing_vel)
         self.group.add(box)
 

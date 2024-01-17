@@ -28,7 +28,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.events = pygame.event.get()
         self.loop = True
-        self.hovered = pygame.sprite.Group()
+        self.hovered = pygame.sprite.GroupSingle()
         self.scene = Scene()
 
     def cursor_by_context(self):
