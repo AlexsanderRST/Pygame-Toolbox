@@ -2,55 +2,81 @@
 
 # Box
 
-## Parameters
+## Params
 
 ### lines
-### width
-### text_color
-### text_size
-### text_aa
-### text_align
-### font_path
 ### bg_color
-### offset
-### spacing
-### border_radius
+### font_path
+### on_end
 ### outline
 ### outline_color
+### padx and pady
+### roundness
+### size_hint
+### spacing
+### text_aa
+### text_align
+### text_color
+### text_size
+### transparency
 ### typing_vel
-### on_end
+### width
 
-## Attributes
+
+## Attrs
 ## Methods
 
 
 # NamedBox
 
-## Parameters
+## Params
 
-### name
 ### lines
-### width
-### text_color
-### text_size
-### text_aa
-### text_align
-### font_path
 ### bg_color
-### name_color
-### name_size
 ### name_bg_color
-### name_pos
+### name_color
 ### name_font_path
-### offset
-### name_offset
-### spacing
-### border_radius
+### name_padx and name_pady
+### name_pos
+### name_roundness
+### name_size
+### name_spacing
+### name_transparency
+### font_path
+### on_end
 ### outline
 ### outline_color
+### padx and pady
+### roundness
+### size_hint
+### spacing
+### text_aa
+### text_align
+### text_color
+### text_size
+### transparency
 ### typing_vel
+### width
 
-## Attributes
+
+## Attrs
+## Methods
+
+
+# NamedBox
+
+## Params
+
+### lines
+### name
+### portrait_surf
+### bg_color
+### box_style
+### portrait_pos
+### position
+
+
+## Attrs
 ## Methods
 
 

@@ -55,44 +55,47 @@ def get_speech_arrow_points(fix_point, rect, width):
 class Box(pygame.sprite.Sprite):
     def __init__(self,
                  lines=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
-                 width=0,
-                 text_color='white',
-                 text_size=32,
-                 text_aa=True,
-                 text_align='left',
-                 font_path=None,
+                 *_,
                  bg_color='darkblue',
-                 offset=6,
-                 spacing=2,
-                 border_radius=-1,
+                 font_path=None,
+                 on_end=lambda: None,
                  outline=0,
                  outline_color='white',
+                 padx=10,
+                 pady=20,
+                 roundness=-1,
+                 size_hint=(0., 0.),
+                 spacing=10,
+                 text_aa=True,
+                 text_align='left',
+                 text_color='white',
+                 text_size=32,
+                 transparency=50,
                  typing_vel=1.,
-                 on_end=lambda: None):
+                 width=0,
+                 ):
         super().__init__()
 
         # properties
-        self.lines = pygame.sprite.Group()
         self.bg_color = bg_color
-        self.offset = offset
+        self.ended = False
+        self.lines = pygame.sprite.Group()
+        self.on_end = on_end
         self.outline_width = 1
         self.outline_color = bg_color
-        self.border_r = border_radius
-        self.on_end = on_end
-        self.ended = False
+        self.roundness = roundness
+        self.transparency = transparency
 
-        # default box
-        text_dict = {'text_color': text_color,
-                     'text_size': text_size,
-                     'text_aa': text_aa,
-                     'font_path': font_path,
-                     'bg_color': bg_color,
-                     'vel': typing_vel,
-                     'offset': 0}
+        # get the screen size
+        screen_size = pygame.display.get_window_size()
+
+        # default text params
+        text_dict = {'text_color': text_color, 'text_size': text_size, 'text_aa': text_aa,
+                     'font_path': font_path, 'vel': typing_vel, 'offset': 0}
 
         # dialog lines sprites
         last_line = None
-        last_bottom = offset
+        last_bottom = pady
         for i in range(len(lines)):
             if i == 0:
                 line = TypingText(text=lines[i], **text_dict)
@@ -100,35 +103,40 @@ class Box(pygame.sprite.Sprite):
                 line = TypingText(text=lines[i], start_at_init=False, **text_dict)
                 last_line.on_end = line.start
             last_line = line
-            line.rect.topleft = offset, last_bottom
+            line.rect.topleft = padx, last_bottom
             last_bottom = line.rect.bottom + spacing
             self.lines.add(line)
 
-        # set on end function at last sprite
+        # set the 'on_end' function at the last sprite
         self.set_on_end(on_end)
 
-        # gets surf width
-        if not width:
+        # get the box width
+        if size_hint[0]:
+            width = size_hint[0] * screen_size[0]
+        elif not width:
             for line in self.lines:
                 width = line.rect.w if line.rect.w > width else width
-            width += 2 * offset
+            width += 2 * padx
 
-        # gets surf height
-        height = self.lines.sprites()[-1].rect.bottom - self.lines.sprites()[0].rect.top + 2 * offset
+        # get the box height
+        if size_hint[1]:
+            height = size_hint[1] * screen_size[1]
+        else:
+            height = self.lines.sprites()[-1].rect.bottom - self.lines.sprites()[0].rect.top + 2 * pady
 
-        # image'n'rect
+        # set the image and rect
         self.image = pygame.Surface((width, height), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
 
-        # align
+        # set the align
         for line in self.lines:
             match text_align:
                 case 'right':
-                    line.rect.right = self.rect.w - offset
+                    line.rect.right = self.rect.w - padx
                 case 'center':
                     line.rect.centerx = round(self.rect.w / 2)
 
-        # outline
+        # set the outline
         if outline:
             self.outline_width = outline
             self.outline_color = outline_color
@@ -144,12 +152,27 @@ class Box(pygame.sprite.Sprite):
     def set_on_end(self, new_function):
         self.lines.sprites()[-1].set_on_end(lambda: self.call_on_end(new_function))
 
-    def update(self):
-        rect = pygame.Rect([0, 0, *self.rect.size])
-        pygame.draw.rect(self.image, self.bg_color, rect, border_radius=self.border_r)
-        pygame.draw.rect(self.image, self.outline_color, rect, self.outline_width, border_radius=self.border_r)
-        self.lines.update()
+    def update_surf(self):
+
+        # redraw image
+        self.image = pygame.Surface(self.image.get_size(), SRCALPHA)
+
+        # redraw the box
+        box_rect = pygame.Rect([0, 0, *self.rect.size])
+        box_surf = pygame.Surface(box_rect.size, SRCALPHA)
+        pygame.draw.rect(box_surf, self.bg_color, box_rect, border_radius=self.roundness)
+        box_surf.set_alpha(round(255 * self.transparency / 100))
+        self.image.blit(box_surf, (0, 0))
+
+        # draw the ouline
+        pygame.draw.rect(self.image, self.outline_color, box_rect, self.outline_width, border_radius=self.roundness)
+
+        # redraw the text lines
         self.lines.draw(self.image)
+
+    def update(self):
+        self.lines.update()
+        self.update_surf()
 
 
 class Manager(pygame.sprite.GroupSingle):
@@ -195,35 +218,57 @@ class Manager(pygame.sprite.GroupSingle):
 
 class NamedBox(pygame.sprite.Sprite):
     def __init__(self,
-                 name='',
                  lines=('Line 1', 'Line 2', 'Line 3', 'Line 4'),
-                 width=0,
-                 text_color='black',
-                 text_size=42,
-                 text_aa=True,
-                 text_align='left',
-                 font_path=None,
+                 name='Alexsander',
+                 *_,
                  bg_color='#fbfcfa',
-                 name_color='white',
-                 name_size='match',
+                 font_path=None,
                  name_bg_color='blue',
-                 name_pos='left',
+                 name_color='white',
                  name_font_path='match',
-                 offset=20,
-                 name_offset=8,
-                 spacing=4,
-                 border_radius=-1,
+                 name_padx=15,
+                 name_pady=7,
+                 name_pos='left',
+                 name_roundness=0,
+                 name_size='match',
+                 name_spacing=0,
+                 name_transparency=100,
                  outline=2,
                  outline_color='#373737',
-                 typing_vel=.72):
+                 padx=10,
+                 pady=20,
+                 roundness=-1,
+                 size_hint=(0., 0.),
+                 spacing=4,
+                 text_aa=True,
+                 text_align='left',
+                 text_color='black',
+                 text_size=42,
+                 trasparency=100,
+                 typing_vel=.72,
+                 width=0,
+                 ):
         super().__init__()
 
         self.group = pygame.sprite.Group()
 
+        # get the screen size
+        screen_size = pygame.display.get_window_size()
+
+        # set the width
+        if size_hint[0]:
+            width = screen_size[0] * size_hint[0]
+        elif not width and not name:
+            width = screen_size[0] * .8
+
+        # set the boxes style
+        boxes_style = {'outline': outline, 'outline_color': outline_color}
+
         # box
-        box = Box(lines, width, text_color, text_size, text_aa,
-                  text_align, font_path, bg_color, offset, spacing,
-                  border_radius, outline, outline_color, typing_vel)
+        box = Box(lines=lines, bg_color=bg_color, font_path=font_path, padx=padx, pady=pady,
+                  roundness=roundness, size_hint=size_hint, spacing=spacing, text_aa=text_aa, text_align=text_align,
+                  text_color=text_color, text_size=text_size, transparency=trasparency, typing_vel=typing_vel,
+                  width=width, **boxes_style)
         self.group.add(box)
 
         # name
@@ -232,44 +277,127 @@ class NamedBox(pygame.sprite.Sprite):
                 name_font_path = font_path
             if name_size == 'match':
                 name_size = text_size
-            name_box = TypingText(text=name, text_color=name_color,
-                                  text_size=name_size, font_path=name_font_path,
-                                  bg_color=name_bg_color, offset=name_offset,
-                                  finish_at_init=True)
+            name_box = Box(lines=[name], bg_color=name_bg_color, font_path=name_font_path,
+                           padx=name_padx, pady=name_pady, roundness=name_roundness,
+                           text_color=name_color, text_size=name_size, transparency=name_transparency,
+                           **boxes_style)
             self.group.add(name_box)
             width = box.rect.w if box.rect.w > name_box.rect.w else name_box.rect.w
-            box.rect.top = name_box.rect.bottom
+            box.rect.top = name_box.rect.bottom + name_spacing
             match name_pos:
                 case 'center':
                     name_box.rect.centerx = round(width / 2)
                 case 'right':
                     name_box.rect.right = width
 
-        self.image = pygame.Surface((width, box.rect.bottom), pygame.SRCALPHA)
+        # set image and rect
+        self.image = pygame.Surface((width, box.rect.bottom), SRCALPHA)
         self.rect = self.image.get_rect()
 
     def update(self):
         self.group.update()
+        self.image = pygame.Surface(self.image.get_size(), SRCALPHA)
         self.group.draw(self.image)
+
+
+class RPGM(NamedBox):
+    def __init__(self,
+                 lines=('Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5'),
+                 name='Alex',
+                 portrait_surf: pygame.Surface = None,
+                 *_,
+                 bg_color='blue',
+                 box_style='default',
+                 portrait_pos='left',
+                 position='bottom',
+                 ):
+
+        # properties
+        text_color = 'white'
+        ouline_color = 'white'
+        size_hint = (.9, 0.35)
+
+        # get the screen size
+        screen_size = pygame.display.get_window_size()
+
+        # get the box height
+        box_w, box_h = screen_size[0] * size_hint[0], screen_size[1] * size_hint[1]
+
+        # get the portrait size
+        portrait_h = box_h * .8
+
+        # get the padx
+        padx = box_h * .1 if portrait_pos == 'right' else portrait_h + box_h * .2
+
+        # set the dialog's end arrow
+        self.arrow = pygame.sprite.Sprite()
+        arrow_h = box_h * .04
+        self.arrow.image = pygame.Surface(2 * [arrow_h], SRCALPHA)
+        pygame.draw.polygon(self.arrow.image, 'white', ((0, 0), (arrow_h / 2, arrow_h), (arrow_h, 0)))
+
+        # get style
+        style = {}
+        match box_style:
+            case 'dim':
+                style['outline'], style['roundness'], style['bg_color'], style['trasparency'] = 0, 0, 'black', 80
+                style['name_bg_color'], style['name_transparency'] = 'black', 80
+            case 'transparent':
+                style['outline'], style['trasparency'] = -1, 0
+            case _:
+                style['outline'], style['roundness'], style['bg_color'], style['trasparency'] = 2, 12, bg_color, 100
+
+        # call super
+        super().__init__(lines=lines, name=name, name_spacing=5, outline_color=ouline_color, padx=padx,
+                         size_hint=size_hint, text_color=text_color, **style)
+
+        # get the portrait position
+        portrait_bottom = self.rect.height - box_h * .1
+        portrait_pos = {'bottomleft': (box_h * .1, portrait_bottom)} if portrait_pos != 'right' else \
+            {'bottomright': (box_w - box_h * .1, portrait_bottom)}
+
+        # set the portrait
+        self.portrait = pygame.sprite.Sprite()
+        if portrait_surf is not None:
+            self.portrait.image = pygame.transform.smoothscale(portrait_surf, 2 * [portrait_h])
+        else:
+            self.portrait.image = pygame.Surface(2 * [portrait_h])
+            self.portrait.image.fill('red')
+        self.portrait.rect = self.portrait.image.get_rect(**portrait_pos)
+
+        # set up the position
+        match position:
+            case 'top':
+                self.rect.midtop = screen_size[0] / 2, screen_size[1] * .05
+            case 'center':
+                self.rect.center = screen_size[0] / 2, screen_size[1] / 2
+            case _:
+                self.rect.midbottom = screen_size[0] / 2, screen_size[1] * .95
+
+        # positionating the arrow
+        self.arrow.rect = self.arrow.image.get_rect(midbottom=(box_w / 2, box_h * .95))
+
+        # add the portrait to group
+        self.group.add(self.portrait)
 
 
 class TypingText(pygame.sprite.Sprite):
     def __init__(self,
-                 width=0,
                  text="I'm an Animated Text!",
-                 text_color='white',
-                 text_size=32,
-                 text_aa=True,
-                 text_align='left',
+                 *_,
+                 finish_at_init=False,
                  font_path=None,
-                 bg_color='black',
                  offset=10,
-                 vel=1,
+                 on_end=lambda: None,
                  outline=0,
                  outline_color='white',
                  start_at_init=True,
-                 finish_at_init=False,
-                 on_end=lambda: None):
+                 text_aa=True,
+                 text_align='left',
+                 text_color='white',
+                 text_size=32,
+                 vel=1,
+                 width=0,
+                 ):
         super().__init__()
 
         # font
@@ -284,10 +412,8 @@ class TypingText(pygame.sprite.Sprite):
         self.frame = 0
         self.frame_counter = 0
         self.vel = 1 / vel * 2
-        self.bg_color = bg_color
-        self.text_info = [text_aa, text_color, self.bg_color]
+        self.text_info = [text_aa, text_color]
         self.outline_width = 1
-        self.outline_color = bg_color
         self.on_end = on_end
         self.ended = False
         self.update = self.typing_anim
@@ -328,29 +454,28 @@ class TypingText(pygame.sprite.Sprite):
         elif start_at_init:
             self.start()
 
-    def start(self):
-        self.frame_counter = 1
-
-    def set_on_end(self, on_end):
-        self.on_end = on_end
-
-    def finish(self):
-        self.frame = len(self.text) * self.vel
-        self.typing_anim()
-        self.end()
-
     def end(self):
         self.on_end()
         self.on_end = lambda: None
         self.update = lambda: None
         self.ended = True
 
+    def finish(self):
+        self.frame = len(self.text) * self.vel
+        self.typing_anim()
+        self.end()
+
+    def set_on_end(self, on_end):
+        self.on_end = on_end
+
+    def start(self):
+        self.frame_counter = 1
+
     def typing_anim(self):
         if self.frame > len(self.text) * self.vel:
             self.end()
         else:
-            self.image.fill(self.bg_color)
+            self.image = pygame.Surface(self.image.get_size(), SRCALPHA)
             text = self.font.render(''.join(self.text[:round(self.frame / self.vel)]), *self.text_info)
             self.image.blit(text, self.text_rect)
-            pygame.draw.rect(self.image, self.outline_color, [0, 0, *self.image.get_size()], self.outline_width)
             self.frame += self.frame_counter
